@@ -32,6 +32,8 @@ set(sources
 	analysis/TypeChecker.h
 	analysis/ViewPureChecker.cpp
 	analysis/ViewPureChecker.h
+	ast/Types.cpp
+	ast/Types.h
 	ast/AST.cpp
 	ast/AST.h
 	ast/AST_accept.h
@@ -45,8 +47,8 @@ set(sources
 	ast/ASTPrinter.h
 	ast/ASTVisitor.h
 	ast/ExperimentalFeatures.h
-	ast/Types.cpp
-	ast/Types.h
+	ast/TypeProvider.cpp
+	ast/TypeProvider.h
 	codegen/ABIFunctions.cpp
 	codegen/ABIFunctions.h
 	codegen/ArrayUtils.cpp

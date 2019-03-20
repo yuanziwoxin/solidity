@@ -38,6 +38,7 @@
 #include <libsolidity/analysis/ViewPureChecker.h>
 
 #include <libsolidity/ast/AST.h>
+#include <libsolidity/ast/TypeProvider.h>
 #include <libsolidity/codegen/Compiler.h>
 #include <libsolidity/formal/SMTChecker.h>
 #include <libsolidity/interface/ABI.h>
@@ -63,6 +64,11 @@ using namespace std;
 using namespace dev;
 using namespace langutil;
 using namespace dev::solidity;
+
+CompilerStack::~CompilerStack()
+{
+	TypeProvider::get().reset();
+}
 
 boost::optional<CompilerStack::Remapping> CompilerStack::parseRemapping(string const& _remapping)
 {
@@ -154,6 +160,7 @@ void CompilerStack::reset(bool _keepSettings)
 	m_sourceOrder.clear();
 	m_contracts.clear();
 	m_errorReporter.clear();
+	TypeProvider::get().reset();
 }
 
 void CompilerStack::setSources(StringMap const& _sources)

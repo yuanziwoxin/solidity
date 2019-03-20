@@ -103,6 +103,8 @@ public:
 		m_errorList(),
 		m_errorReporter(m_errorList) {}
 
+	~CompilerStack();
+
 	/// @returns the list of errors that occurred during parsing and type checking.
 	langutil::ErrorList const& errors() const { return m_errorReporter.errors(); }
 
