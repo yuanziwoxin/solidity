@@ -23,6 +23,8 @@
 #include <libsolidity/codegen/ir/IRGenerationContext.h>
 #include <libsolidity/codegen/YulUtilFunctions.h>
 
+#include <libdevcore/StringUtils.h>
+
 using namespace std;
 using namespace dev;
 using namespace dev::solidity;
@@ -63,10 +65,10 @@ bool IRGeneratorForStatements::visit(Assignment const& _assignment)
 
 	_assignment.rightHandSide().accept(*this);
 
-	solUnimplementedAssert(
-		*_assignment.rightHandSide().annotation().type == *_assignment.leftHandSide().annotation().type,
-		"Type conversion not yet implemented"
-	);
+//	solUnimplementedAssert(
+//		*_assignment.rightHandSide().annotation().type == *_assignment.leftHandSide().annotation().type,
+//		"Type conversion not yet implemented"
+//	);
 	// TODO proper lvalue handling
 	auto const& identifier = dynamic_cast<Identifier const&>(_assignment.leftHandSide());
 	string varName = m_context.variableName(dynamic_cast<VariableDeclaration const&>(*identifier.annotation().referencedDeclaration));
@@ -97,11 +99,115 @@ void IRGeneratorForStatements::endVisit(BinaryOperation const& _binOp)
 		solUnimplementedAssert(false, "");
 }
 
+bool IRGeneratorForStatements::visit(FunctionCall const& _functionCall)
+{
+	solUnimplementedAssert(_functionCall.annotation().kind == FunctionCallKind::FunctionCall, "");
+	FunctionTypePointer functionType = dynamic_pointer_cast<FunctionType const>(_functionCall.expression().annotation().type);
+
+	TypePointers parameterTypes = functionType->parameterTypes();
+	vector<ASTPointer<Expression const>> const& callArguments = _functionCall.arguments();
+	vector<ASTPointer<ASTString>> const& callArgumentNames = _functionCall.names();
+	if (!functionType->takesArbitraryParameters())
+		solAssert(callArguments.size() == parameterTypes.size(), "");
+
+	vector<ASTPointer<Expression const>> arguments;
+	if (callArgumentNames.empty())
+		// normal arguments
+		arguments = callArguments;
+	else
+		// named arguments
+		for (auto const& parameterName: functionType->parameterNames())
+		{
+			bool found = false;
+			for (size_t j = 0; j < callArgumentNames.size() && !found; j++)
+				if ((found = (parameterName == *callArgumentNames[j])))
+					// we found the actual parameter position
+					arguments.push_back(callArguments[j]);
+			solAssert(found, "");
+		}
+
+	solUnimplementedAssert(!functionType->bound(), "");
+	switch (functionType->kind())
+	{
+	case FunctionType::Kind::Internal:
+	{
+		vector<string> args;
+		for (unsigned i = 0; i < arguments.size(); ++i)
+		{
+			arguments[i]->accept(*this);
+			// TODO convert
+			//utils().convertType(*arguments[i]->annotation().type, *function.parameterTypes()[i]);
+			args.emplace_back(m_context.variable(*arguments[i]));
+		}
+
+		if (auto identifier = dynamic_cast<Identifier const*>(&_functionCall.expression()))
+		{
+			solAssert(!functionType->bound(), "");
+			if (auto functionDef = dynamic_cast<FunctionDefinition const*>(identifier->annotation().referencedDeclaration))
+			{
+				// @TODO The function can very well return multiple vars.
+				m_code <<
+					"let " <<
+					m_context.variable(_functionCall) <<
+					" := " <<
+					m_context.virtualFunctionName(*functionDef) <<
+					"(" <<
+					joinHumanReadable(args) <<
+					")\n";
+				return false;
+			}
+		}
+
+		_functionCall.expression().accept(*this);
+
+		// @TODO The function can very well return multiple vars.
+		args = vector<string>{m_context.variable(_functionCall.expression())} + args;
+		m_code <<
+			"let " <<
+			m_context.variable(_functionCall) <<
+			" := " <<
+			m_context.internalDispatch(functionType->parameterTypes().size(), functionType->returnParameterTypes().size()) <<
+			"(" <<
+			joinHumanReadable(args) <<
+			")\n";
+		break;
+	}
+	default:
+		solUnimplemented("");
+	}
+	return false;
+}
+
 bool IRGeneratorForStatements::visit(Identifier const& _identifier)
 {
-	auto const& decl = dynamic_cast<VariableDeclaration const&>(
-		*_identifier.annotation().referencedDeclaration
-	);
-	m_code << "let " << m_context.variable(_identifier) << " := " << m_context.variableName(decl) << "\n";
+	Declaration const* declaration = _identifier.annotation().referencedDeclaration;
+	string value;
+	if (FunctionDefinition const* functionDef = dynamic_cast<FunctionDefinition const*>(declaration))
+		value = to_string(m_context.virtualFunction(*functionDef).id());
+	else if (VariableDeclaration const* varDecl = dynamic_cast<VariableDeclaration const*>(declaration))
+		value = m_context.variableName(*varDecl);
+	else
+		solUnimplemented("");
+	m_code << "let " << m_context.variable(_identifier) << " := " << value << "\n";
+	return false;
+}
+
+bool IRGeneratorForStatements::visit(Literal const& _literal)
+{
+	TypePointer type = _literal.annotation().type;
+
+	switch (type->category())
+	{
+	case Type::Category::RationalNumber:
+	case Type::Category::Bool:
+	case Type::Category::Address:
+		m_code << "let " << m_context.variable(_literal) << " := " << toCompactHexWithPrefix(type->literalValue(&_literal)) << "\n";
+		break;
+	case Type::Category::StringLiteral:
+		solUnimplemented("");
+		break; // will be done during conversion
+	default:
+		solUnimplemented("Only integer, boolean and string literals implemented for now.");
+	}
 	return false;
 }
