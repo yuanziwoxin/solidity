@@ -989,10 +989,9 @@ void CompilerUtils::convertType(
 			{
 			case DataLocation::Storage:
 			{
-				auto conversionImpl = [
-					typeOnStack = dynamic_pointer_cast<StructType const>(_typeOnStack.shared_from_this()),
-					targetType = dynamic_pointer_cast<StructType const>(targetType.shared_from_this())
-				](CompilerContext& _context) {
+				auto conversionImpl =
+					[typeOnStack = &typeOnStack, targetType = &targetType](CompilerContext& _context)
+				{
 					CompilerUtils utils(_context);
 					// stack: <source ref>
 					utils.allocateMemory(typeOnStack->memorySize());
