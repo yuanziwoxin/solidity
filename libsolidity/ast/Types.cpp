@@ -437,6 +437,16 @@ AddressType::AddressType(StateMutability _stateMutability):
 	solAssert(m_stateMutability == StateMutability::Payable || m_stateMutability == StateMutability::NonPayable, "");
 }
 
+AddressType const& AddressType::address()
+{
+	return *TypeProvider::get().addressType();
+}
+
+AddressType const& AddressType::addressPayable()
+{
+	return *TypeProvider::get().payableAddressType();
+}
+
 string AddressType::richIdentifier() const
 {
 	if (m_stateMutability == StateMutability::Payable)
@@ -548,6 +558,11 @@ IntegerType::IntegerType(unsigned _bits, IntegerType::Modifier _modifier):
 		m_bits > 0 && m_bits <= 256 && m_bits % 8 == 0,
 		"Invalid bit number for integer type: " + dev::toString(m_bits)
 	);
+}
+
+IntegerType const& IntegerType::uint256()
+{
+	return *TypeProvider::get().integerType(256, IntegerType::Modifier::Unsigned);
 }
 
 string IntegerType::richIdentifier() const
@@ -1327,7 +1342,7 @@ StringLiteralType::StringLiteralType(Literal const& _literal):
 {
 }
 
-StringLiteralType::StringLiteralType(ASTString const& _value):
+StringLiteralType::StringLiteralType(string const& _value):
 	m_value{_value}
 {
 }
@@ -1592,6 +1607,23 @@ string ReferenceType::identifierLocationSuffix() const
 	if (isPointer())
 		id += "_ptr";
 	return id;
+}
+
+ArrayType::ArrayType(DataLocation _location, bool _isString):
+	ReferenceType(_location),
+	m_arrayKind(_isString ? ArrayKind::String : ArrayKind::Bytes),
+	m_baseType{TypeProvider::get().byteType()}
+{
+}
+
+ArrayType const& ArrayType::bytesMemory()
+{
+	return *TypeProvider::get().bytesMemoryType();
+}
+
+ArrayType const& ArrayType::stringMemory()
+{
+	return *TypeProvider::get().stringMemoryType();
 }
 
 BoolResult ArrayType::isImplicitlyConvertibleTo(Type const& _convertTo) const
@@ -3259,6 +3291,11 @@ bool FunctionType::padArguments() const
 	return true;
 }
 
+Type const* MappingType::encodingType() const
+{
+	return TypeProvider::get().integerType(256, IntegerType::Modifier::Unsigned);
+}
+
 string MappingType::richIdentifier() const
 {
 	return "t_mapping" + identifierList(m_keyType, m_valueType);
@@ -3602,4 +3639,7 @@ TypePointer MagicType::typeArgument() const
 	return m_typeArgument;
 }
 
-FixedBytesType const ArrayType::m_baseTypeForBytes{1};
+TypePointer InaccessibleDynamicType::decodingType() const
+{
+	return TypeProvider::get().integerType(256, IntegerType::Modifier::Unsigned);
+}

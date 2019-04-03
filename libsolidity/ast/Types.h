@@ -345,8 +345,8 @@ protected:
 class AddressType: public Type
 {
 public:
-	static AddressType const& address() { static AddressType addr{StateMutability::NonPayable}; return addr; }
-	static AddressType const& addressPayable() { static AddressType addr{StateMutability::Payable}; return addr; }
+	static AddressType const& address();
+	static AddressType const& addressPayable();
 
 	Category category() const override { return Category::Address; }
 
@@ -392,7 +392,7 @@ public:
 		Unsigned, Signed
 	};
 
-	static IntegerType& uint256() { static std::shared_ptr<IntegerType> uint256(std::make_shared<IntegerType>(256)); return *uint256; }
+	static IntegerType const& uint256();
 
 	Category category() const override { return Category::Integer; }
 
@@ -560,7 +560,7 @@ public:
 	Category category() const override { return Category::StringLiteral; }
 
 	explicit StringLiteralType(Literal const& _literal);
-	explicit StringLiteralType(ASTString const& _value);
+	explicit StringLiteralType(std::string const& _value);
 
 	BoolResult isImplicitlyConvertibleTo(Type const& _convertTo) const override;
 	TypeResult binaryOperatorResult(Token, Type const*) const override
@@ -710,21 +710,15 @@ protected:
  */
 class ArrayType: public ReferenceType
 {
-	static FixedBytesType const m_baseTypeForBytes;
-
 public:
-	static ArrayType const& bytesMemory() { static ArrayType addr{DataLocation::Memory}; return addr; }
-	static ArrayType const& stringMemory() { static ArrayType addr{DataLocation::Memory, true}; return addr; }
+	static ArrayType const& bytesMemory();
+	static ArrayType const& stringMemory();
 
 	Category category() const override { return Category::Array; }
 
 	/// Constructor for a byte array ("bytes") and string.
-	explicit ArrayType(DataLocation _location, bool _isString = false):
-		ReferenceType(_location),
-		m_arrayKind(_isString ? ArrayKind::String : ArrayKind::Bytes),
-		m_baseType{&m_baseTypeForBytes}
-	{
-	}
+	explicit ArrayType(DataLocation _location, bool _isString = false);
+
 	/// Constructor for a dynamically sized array type ("type[]")
 	ArrayType(DataLocation _location, Type const* _baseType):
 		ReferenceType(_location),
@@ -1287,11 +1281,7 @@ public:
 	std::string canonicalName() const override;
 	bool canLiveOutsideStorage() const override { return false; }
 	TypeResult binaryOperatorResult(Token, Type const*) const override { return nullptr; }
-	Type const* encodingType() const override
-	{
-		static IntegerType const t{256, IntegerType::Modifier::Unsigned};
-		return &t;
-	}
+	Type const* encodingType() const override;
 	TypeResult interfaceType(bool _inLibrary) const override;
 	bool dataStoredIn(DataLocation _location) const override { return _location == DataLocation::Storage; }
 	/// Cannot be stored in memory, but just in case.
@@ -1427,7 +1417,6 @@ private:
 	Kind m_kind;
 	/// Contract type used for contract metadata magic.
 	TypePointer m_typeArgument;
-
 };
 
 /**
@@ -1450,11 +1439,7 @@ public:
 	unsigned sizeOnStack() const override { return 1; }
 	bool hasSimpleZeroValueInMemory() const override { solAssert(false, ""); }
 	std::string toString(bool) const override { return "inaccessible dynamic type"; }
-	TypePointer decodingType() const override
-	{
-		static IntegerType const t{256}; // TODO: use the one from TypeProvider::uintType(256);
-		return &t;
-	}
+	TypePointer decodingType() const override;
 };
 
 }
