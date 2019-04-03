@@ -18,6 +18,9 @@
 #include <libsolidity/ast/TypeProvider.h>
 #include <libdevcore/ArrayUtil.h>
 
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/split.hpp>
+
 using namespace std;
 using namespace dev;
 using namespace solidity;
@@ -155,6 +158,51 @@ Type const* TypeProvider::fromElementaryTypeName(ElementaryTypeNameToken const& 
 			false,
 			"Unable to convert elementary typename " + _type.toString() + " to type."
 		);
+	}
+}
+
+TypePointer TypeProvider::fromElementaryTypeName(string const& _name)
+{
+	vector<string> nameParts;
+	boost::split(nameParts, _name, boost::is_any_of(" "));
+	solAssert(nameParts.size() == 1 || nameParts.size() == 2, "Cannot parse elementary type: " + _name);
+
+	Token token;
+	unsigned short firstNum, secondNum;
+	tie(token, firstNum, secondNum) = TokenTraits::fromIdentifierOrKeyword(nameParts[0]);
+
+	auto t = fromElementaryTypeName(ElementaryTypeNameToken(token, firstNum, secondNum));
+	if (auto* ref = dynamic_cast<ReferenceType const*>(t))
+	{
+		DataLocation location = DataLocation::Storage;
+		if (nameParts.size() == 2)
+		{
+			if (nameParts[1] == "storage")
+				location = DataLocation::Storage;
+			else if (nameParts[1] == "calldata")
+				location = DataLocation::CallData;
+			else if (nameParts[1] == "memory")
+				location = DataLocation::Memory;
+			else
+				solAssert(false, "Unknown data location: " + nameParts[1]);
+		}
+		return withLocation(ref, location, true);
+	}
+	else if (t->category() == Type::Category::Address)
+	{
+		if (nameParts.size() == 2)
+		{
+			if (nameParts[1] == "payable")
+				return payableAddressType();
+			else
+				solAssert(false, "Invalid state mutability for address type: " + nameParts[1]);
+		}
+		return addressType();
+	}
+	else
+	{
+		solAssert(nameParts.size() == 1, "Storage location suffix only allowed for reference types");
+		return t;
 	}
 }
 

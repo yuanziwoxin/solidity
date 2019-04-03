@@ -65,8 +65,15 @@ public:
 		return _provider;
 	}
 
+	/// @name Factory functions
+	/// Factory functions that convert an AST @ref TypeName to a Type.
 	Type const* fromElementaryTypeName(ElementaryTypeNameToken const& _type);
 
+	/// Converts a given elementary type name with optional data location
+	/// suffix " storage", " calldata" or " memory" to a type pointer. If suffix not given, defaults to " storage".
+	TypePointer fromElementaryTypeName(std::string const& _name);
+
+	/// @returns boolean type.
 	BoolType const* boolType() const noexcept { return &m_boolType; }
 
 	FixedBytesType const* byteType() { return fixedBytesType(1); }

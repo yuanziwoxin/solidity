@@ -302,45 +302,7 @@ TypePointer Type::fromElementaryTypeName(ElementaryTypeNameToken const& _type)
 
 TypePointer Type::fromElementaryTypeName(string const& _name)
 {
-	vector<string> nameParts;
-	boost::split(nameParts, _name, boost::is_any_of(" "));
-	solAssert(nameParts.size() == 1 || nameParts.size() == 2, "Cannot parse elementary type: " + _name);
-	Token token;
-	unsigned short firstNum, secondNum;
-	tie(token, firstNum, secondNum) = TokenTraits::fromIdentifierOrKeyword(nameParts[0]);
-	auto t = fromElementaryTypeName(ElementaryTypeNameToken(token, firstNum, secondNum));
-	if (auto* ref = dynamic_cast<ReferenceType const*>(t))
-	{
-		DataLocation location = DataLocation::Storage;
-		if (nameParts.size() == 2)
-		{
-			if (nameParts[1] == "storage")
-				location = DataLocation::Storage;
-			else if (nameParts[1] == "calldata")
-				location = DataLocation::CallData;
-			else if (nameParts[1] == "memory")
-				location = DataLocation::Memory;
-			else
-				solAssert(false, "Unknown data location: " + nameParts[1]);
-		}
-		return TypeProvider::get().withLocation(ref, location, true);
-	}
-	else if (t->category() == Type::Category::Address)
-	{
-		if (nameParts.size() == 2)
-		{
-			if (nameParts[1] == "payable")
-				return TypeProvider::get().payableAddressType();
-			else
-				solAssert(false, "Invalid state mutability for address type: " + nameParts[1]);
-		}
-		return TypeProvider::get().addressType();
-	}
-	else
-	{
-		solAssert(nameParts.size() == 1, "Storage location suffix only allowed for reference types");
-		return t;
-	}
+	return TypeProvider::get().fromElementaryTypeName(_name);
 }
 
 TypePointer Type::forLiteral(Literal const& _literal)
