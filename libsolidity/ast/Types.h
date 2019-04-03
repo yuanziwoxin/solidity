@@ -320,8 +320,8 @@ public:
 	/// are returned without modification.
 	virtual TypeResult interfaceType(bool /*_inLibrary*/) const { return nullptr; }
 
-	/// Clears the (member) cache (if present).
-	void clearCache() const { m_members.clear(); }
+	/// Clears all internally cached values (if any).
+	virtual void clearCache() const;
 
 private:
 	/// @returns a member list containing all members added to this type by `using for` directives.
@@ -771,6 +771,8 @@ public:
 	/// The offset to advance in storage to move from one array element to the next.
 	unsigned storageStride() const { return isByteArray() ? 1 : m_baseType->storageBytes(); }
 
+	void clearCache() const override;
+
 private:
 	/// String is interpreted as a subtype of Bytes.
 	enum class ArrayKind { Ordinary, Bytes, String };
@@ -922,6 +924,9 @@ public:
 	TypePointers memoryMemberTypes() const;
 	/// @returns the set of all members that are removed in the memory version (typically mappings).
 	std::set<std::string> membersMissingInMemory() const;
+
+	void clearCache() const override;
+
 private:
 	StructDefinition const& m_struct;
 	// Caches for interfaceType(bool)

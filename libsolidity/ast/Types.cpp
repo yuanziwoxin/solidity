@@ -150,6 +150,11 @@ bool fitsIntoBits(bigint const& _value, unsigned _bits, bool _signed)
 
 }
 
+void Type::clearCache() const
+{
+	m_members.clear();
+}
+
 void StorageOffsets::computeOffsets(TypePointers const& _types)
 {
 	bigint slotOffset = 0;
@@ -1616,6 +1621,14 @@ ArrayType::ArrayType(DataLocation _location, bool _isString):
 {
 }
 
+void ArrayType::clearCache() const
+{
+	Type::clearCache();
+
+	m_interfaceType.reset();
+	m_interfaceType_library.reset();
+}
+
 ArrayType const& ArrayType::bytesMemory()
 {
 	return *TypeProvider::get().bytesMemoryType();
@@ -2027,6 +2040,14 @@ vector<tuple<VariableDeclaration const*, u256, unsigned>> ContractType::stateVar
 		if (auto const* offset = offsets.offset(index))
 			variablesAndOffsets.emplace_back(variables[index], offset->first, offset->second);
 	return variablesAndOffsets;
+}
+
+void StructType::clearCache() const
+{
+	Type::clearCache();
+
+	m_interfaceType.reset();
+	m_interfaceType_library.reset();
 }
 
 BoolResult StructType::isImplicitlyConvertibleTo(Type const& _convertTo) const
