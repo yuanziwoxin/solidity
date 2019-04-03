@@ -873,10 +873,10 @@ bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 			solAssert(function.parameterTypes().size() == 1, "");
 			solAssert(!!function.parameterTypes()[0], "");
 			TypePointer paramType = function.parameterTypes()[0];
-			unique_ptr<ArrayType> arrayType =
+			ArrayType const* arrayType =
 				function.kind() == FunctionType::Kind::ArrayPush ?
-				make_unique<ArrayType>(DataLocation::Storage, paramType) :
-				make_unique<ArrayType>(DataLocation::Storage);
+				TypeProvider::get().arrayType(DataLocation::Storage, paramType) :
+				TypeProvider::get().arrayType(DataLocation::Storage);
 
 			// stack: ArrayReference
 			arguments[0]->accept(*this);
