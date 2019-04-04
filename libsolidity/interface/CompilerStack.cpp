@@ -65,8 +65,22 @@ using namespace dev;
 using namespace langutil;
 using namespace dev::solidity;
 
+static int g_compilerStackCounts = 0;
+
+CompilerStack::CompilerStack(ReadCallback::Callback const& _readFile):
+	m_readFile(_readFile),
+	m_errorList(),
+	m_errorReporter(m_errorList)
+{
+	// Because TypeProvider is currently a singleton API, we must ensure that
+	// no more than one entity is actually using it at a time.
+	solAssert(g_compilerStackCounts == 0, "You shall not have another CompilerStack aside me.");
+	++g_compilerStackCounts;
+}
+
 CompilerStack::~CompilerStack()
 {
+	--g_compilerStackCounts;
 	TypeProvider::get().reset();
 }
 
