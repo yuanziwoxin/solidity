@@ -65,7 +65,7 @@ void ConstantEvaluator::endVisit(BinaryOperation const& _operation)
 
 void ConstantEvaluator::endVisit(Literal const& _literal)
 {
-	setType(_literal, Type::forLiteral(_literal));
+	setType(_literal, TypeProvider::get().forLiteral(_literal));
 }
 
 void ConstantEvaluator::endVisit(Identifier const& _identifier)

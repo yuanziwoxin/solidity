@@ -295,32 +295,6 @@ string Type::identifier() const
 	return ret;
 }
 
-TypePointer Type::fromElementaryTypeName(ElementaryTypeNameToken const& _type)
-{
-	return TypeProvider::get().fromElementaryTypeName(_type);
-}
-
-TypePointer Type::fromElementaryTypeName(string const& _name)
-{
-	return TypeProvider::get().fromElementaryTypeName(_name);
-}
-
-TypePointer Type::forLiteral(Literal const& _literal)
-{
-	switch (_literal.token())
-	{
-	case Token::TrueLiteral:
-	case Token::FalseLiteral:
-		return TypeProvider::get().boolType();
-	case Token::Number:
-		return RationalNumberType::forLiteral(_literal);
-	case Token::StringLiteral:
-		return TypeProvider::get().stringLiteralType(_literal.value());
-	default:
-		return nullptr;
-	}
-}
-
 TypePointer Type::commonType(Type const* _a, Type const* _b)
 {
 	if (!_a || !_b)
@@ -793,25 +767,6 @@ tuple<bool, rational> RationalNumberType::parseRational(string const& _value)
 	{
 		return make_tuple(false, rational(0));
 	}
-}
-
-TypePointer RationalNumberType::forLiteral(Literal const& _literal)
-{
-	solAssert(_literal.token() == Token::Number, "");
-	tuple<bool, rational> validLiteral = isValidLiteral(_literal);
-	if (get<0>(validLiteral))
-	{
-		TypePointer compatibleBytesType = nullptr;
-		if (_literal.isHexNumber())
-		{
-			size_t const digitCount = _literal.valueWithoutUnderscores().length() - 2;
-			if (digitCount % 2 == 0 && (digitCount / 2) <= 32)
-				compatibleBytesType = TypeProvider::get().fixedBytesType(digitCount / 2);
-		}
-
-		return TypeProvider::get().rationalNumberType(get<1>(validLiteral), compatibleBytesType);
-	}
-	return nullptr;
 }
 
 tuple<bool, rational> RationalNumberType::isValidLiteral(Literal const& _literal)
@@ -3177,7 +3132,7 @@ TypePointers FunctionType::parseElementaryTypeVector(strings const& _types)
 	TypePointers pointers;
 	pointers.reserve(_types.size());
 	for (string const& type: _types)
-		pointers.push_back(Type::fromElementaryTypeName(type));
+		pointers.push_back(TypeProvider::get().fromElementaryTypeName(type));
 	return pointers;
 }
 

@@ -84,7 +84,7 @@ void CompilerUtils::toSizeAfterFreeMemoryPointer()
 
 void CompilerUtils::revertWithStringData(Type const& _argumentType)
 {
-	solAssert(_argumentType.isImplicitlyConvertibleTo(*Type::fromElementaryTypeName("string memory")), "");
+	solAssert(_argumentType.isImplicitlyConvertibleTo(*TypeProvider::get().fromElementaryTypeName("string memory")), "");
 	fetchFreeMemoryPointer();
 	m_context << (u256(FixedHash<4>::Arith(FixedHash<4>(dev::keccak256("Error(string)")))) << (256 - 32));
 	m_context << Instruction::DUP2 << Instruction::MSTORE;

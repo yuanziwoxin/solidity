@@ -205,6 +205,41 @@ TypePointer TypeProvider::fromElementaryTypeName(string const& _name)
 	}
 }
 
+TypePointer TypeProvider::forLiteral(Literal const& _literal)
+{
+	switch (_literal.token())
+	{
+	case Token::TrueLiteral:
+	case Token::FalseLiteral:
+		return boolType();
+	case Token::Number:
+		return rationalNumberType(_literal);
+	case Token::StringLiteral:
+		return stringLiteralType(_literal.value());
+	default:
+		return nullptr;
+	}
+}
+
+RationalNumberType const* TypeProvider::rationalNumberType(Literal const& _literal)
+{
+	solAssert(_literal.token() == Token::Number, "");
+	std::tuple<bool, rational> validLiteral = RationalNumberType::isValidLiteral(_literal);
+	if (std::get<0>(validLiteral))
+	{
+		TypePointer compatibleBytesType = nullptr;
+		if (_literal.isHexNumber())
+		{
+			size_t const digitCount = _literal.valueWithoutUnderscores().length() - 2;
+			if (digitCount % 2 == 0 && (digitCount / 2) <= 32)
+				compatibleBytesType = fixedBytesType(digitCount / 2);
+		}
+
+		return rationalNumberType(std::get<1>(validLiteral), compatibleBytesType);
+	}
+	return nullptr;
+}
+
 StringLiteralType const* TypeProvider::stringLiteralType(string const& literal)
 {
 	auto i = m_stringLiteralTypes.find(literal);

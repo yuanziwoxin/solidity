@@ -121,7 +121,7 @@ bool ReferencesResolver::visit(ElementaryTypeName const& _typeName)
 {
 	if (!_typeName.annotation().type)
 	{
-		_typeName.annotation().type = Type::fromElementaryTypeName(_typeName.typeName());
+		_typeName.annotation().type = TypeProvider::get().fromElementaryTypeName(_typeName.typeName());
 		if (_typeName.stateMutability().is_initialized())
 		{
 			// for non-address types this was already caught by the parser

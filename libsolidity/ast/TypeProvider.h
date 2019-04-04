@@ -169,6 +169,11 @@ public:
 		bool _bound = false
 	);
 
+	/// Auto-detect the proper type for a literal. @returns an empty pointer if the literal does
+	/// not fit any type.
+	TypePointer forLiteral(Literal const& _literal);
+	RationalNumberType const* rationalNumberType(Literal const& _literal);
+
 	RationalNumberType const* rationalNumberType(
 		rational const& _value,
 		Type const* _compatibleBytesType = nullptr

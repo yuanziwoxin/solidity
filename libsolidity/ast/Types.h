@@ -167,18 +167,6 @@ public:
 		InaccessibleDynamic
 	};
 
-	/// @{
-	/// @name Factory functions
-	/// Factory functions that convert an AST @ref TypeName to a Type.
-	static TypePointer fromElementaryTypeName(ElementaryTypeNameToken const& _type);
-	/// Converts a given elementary type name with optional data location
-	/// suffix " storage", " calldata" or " memory" to a type pointer. If suffix not given, defaults to " storage".
-	static TypePointer fromElementaryTypeName(std::string const& _name);
-	/// @}
-
-	/// Auto-detect the proper type for a literal. @returns an empty pointer if the literal does
-	/// not fit any type.
-	static TypePointer forLiteral(Literal const& _literal);
 	/// @returns a pointer to _a or _b if the other is implicitly convertible to it or nullptr otherwise
 	static TypePointer commonType(Type const* _a, Type const* _b);
 
@@ -497,8 +485,6 @@ public:
 
 	Category category() const override { return Category::RationalNumber; }
 
-	static TypePointer forLiteral(Literal const& _literal);
-
 	explicit RationalNumberType(rational const& _value, Type const* _compatibleBytesType = nullptr):
 		m_value(_value), m_compatibleBytesType(_compatibleBytesType)
 	{}
@@ -533,15 +519,15 @@ public:
 	/// @returns true if the value is zero.
 	bool isZero() const { return m_value == 0; }
 
+	/// @returns true if the literal is a valid integer.
+	static std::tuple<bool, rational> isValidLiteral(Literal const& _literal);
+
 private:
 	rational m_value;
 
 	/// Bytes type to which the rational can be explicitly converted.
 	/// Empty for all rationals that are not directly parsed from hex literals.
 	TypePointer m_compatibleBytesType;
-
-	/// @returns true if the literal is a valid integer.
-	static std::tuple<bool, rational> isValidLiteral(Literal const& _literal);
 
 	/// @returns true if the literal is a valid rational number.
 	static std::tuple<bool, rational> parseRational(std::string const& _value);

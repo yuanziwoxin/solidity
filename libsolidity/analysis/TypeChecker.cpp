@@ -2364,7 +2364,7 @@ bool TypeChecker::visit(Identifier const& _identifier)
 
 void TypeChecker::endVisit(ElementaryTypeNameExpression const& _expr)
 {
-	_expr.annotation().type = m_typeProvider.typeType(Type::fromElementaryTypeName(_expr.typeName()));
+	_expr.annotation().type = m_typeProvider.typeType(m_typeProvider.fromElementaryTypeName(_expr.typeName()));
 	_expr.annotation().isPure = true;
 }
 
@@ -2412,7 +2412,7 @@ void TypeChecker::endVisit(Literal const& _literal)
 		);
 
 	if (!_literal.annotation().type)
-		_literal.annotation().type = Type::forLiteral(_literal);
+		_literal.annotation().type = m_typeProvider.forLiteral(_literal);
 
 	if (!_literal.annotation().type)
 		m_errorReporter.fatalTypeError(_literal.location(), "Invalid literal value.");
