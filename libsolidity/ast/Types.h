@@ -987,7 +987,7 @@ class TupleType: public Type
 {
 public:
 	Category category() const override { return Category::Tuple; }
-	explicit TupleType(std::vector<TypePointer> const& _types = std::vector<TypePointer>()): m_components(_types) {}
+	explicit TupleType(std::vector<TypePointer> _types = {}): m_components(std::move(_types)) {}
 	TupleType(TupleType&&) = default;
 	TupleType& operator=(TupleType&) = default;
 
