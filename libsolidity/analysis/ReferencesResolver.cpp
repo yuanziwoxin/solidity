@@ -121,7 +121,7 @@ bool ReferencesResolver::visit(ElementaryTypeName const& _typeName)
 {
 	if (!_typeName.annotation().type)
 	{
-		_typeName.annotation().type = TypeProvider::get().fromElementaryTypeName(_typeName.typeName());
+		_typeName.annotation().type = TypeProvider::fromElementaryTypeName(_typeName.typeName());
 		if (_typeName.stateMutability().is_initialized())
 		{
 			// for non-address types this was already caught by the parser
@@ -129,10 +129,10 @@ bool ReferencesResolver::visit(ElementaryTypeName const& _typeName)
 			switch(*_typeName.stateMutability())
 			{
 				case StateMutability::Payable:
-					_typeName.annotation().type = TypeProvider::get().payableAddressType();
+					_typeName.annotation().type = TypeProvider::payableAddressType();
 					break;
 				case StateMutability::NonPayable:
-					_typeName.annotation().type = TypeProvider::get().addressType();
+					_typeName.annotation().type = TypeProvider::addressType();
 					break;
 				default:
 					m_errorReporter.typeError(
@@ -172,8 +172,6 @@ void ReferencesResolver::endVisit(ModifierDefinition const&)
 
 void ReferencesResolver::endVisit(UserDefinedTypeName const& _typeName)
 {
-	TypeProvider& typeProvider = TypeProvider::get();
-
 	Declaration const* declaration = m_resolver.pathFromCurrentScope(_typeName.namePath());
 	if (!declaration)
 	{
@@ -184,14 +182,14 @@ void ReferencesResolver::endVisit(UserDefinedTypeName const& _typeName)
 	_typeName.annotation().referencedDeclaration = declaration;
 
 	if (StructDefinition const* structDef = dynamic_cast<StructDefinition const*>(declaration))
-		_typeName.annotation().type = typeProvider.structType(*structDef);
+		_typeName.annotation().type = TypeProvider::structType(*structDef);
 	else if (EnumDefinition const* enumDef = dynamic_cast<EnumDefinition const*>(declaration))
-		_typeName.annotation().type = typeProvider.enumType(*enumDef);
+		_typeName.annotation().type = TypeProvider::enumType(*enumDef);
 	else if (ContractDefinition const* contract = dynamic_cast<ContractDefinition const*>(declaration))
-		_typeName.annotation().type = typeProvider.contractType(*contract);
+		_typeName.annotation().type = TypeProvider::contractType(*contract);
 	else
 	{
-		_typeName.annotation().type = typeProvider.emptyTupleType();
+		_typeName.annotation().type = TypeProvider::emptyTupleType();
 		typeError(_typeName.location(), "Name has to refer to a struct, enum or contract.");
 	}
 }
@@ -225,7 +223,7 @@ void ReferencesResolver::endVisit(FunctionTypeName const& _typeName)
 			}
 		}
 
-	_typeName.annotation().type = TypeProvider::get().functionType(_typeName);
+	_typeName.annotation().type = TypeProvider::functionType(_typeName);
 }
 
 void ReferencesResolver::endVisit(Mapping const& _typeName)
@@ -236,7 +234,7 @@ void ReferencesResolver::endVisit(Mapping const& _typeName)
 	keyType = ReferenceType::copyForLocationIfReference(DataLocation::Memory, keyType);
 	// Convert value type to storage reference.
 	valueType = ReferenceType::copyForLocationIfReference(DataLocation::Storage, valueType);
-	_typeName.annotation().type = TypeProvider::get().mappingType(keyType, valueType);
+	_typeName.annotation().type = TypeProvider::mappingType(keyType, valueType);
 }
 
 void ReferencesResolver::endVisit(ArrayTypeName const& _typeName)
@@ -264,10 +262,10 @@ void ReferencesResolver::endVisit(ArrayTypeName const& _typeName)
 		else if (lengthType->isNegative())
 			fatalTypeError(length->location(), "Array with negative length specified.");
 		else
-			_typeName.annotation().type = TypeProvider::get().arrayType(DataLocation::Storage, baseType, lengthType->literalValue(nullptr));
+			_typeName.annotation().type = TypeProvider::arrayType(DataLocation::Storage, baseType, lengthType->literalValue(nullptr));
 	}
 	else
-		_typeName.annotation().type = TypeProvider::get().arrayType(DataLocation::Storage, baseType);
+		_typeName.annotation().type = TypeProvider::arrayType(DataLocation::Storage, baseType);
 }
 
 bool ReferencesResolver::visit(InlineAssembly const& _inlineAssembly)
@@ -444,7 +442,7 @@ void ReferencesResolver::endVisit(VariableDeclaration const& _variable)
 	if (auto ref = dynamic_cast<ReferenceType const*>(type))
 	{
 		bool isPointer = !_variable.isStateVariable();
-		type = TypeProvider::get().withLocation(ref, typeLoc, isPointer);
+		type = TypeProvider::withLocation(ref, typeLoc, isPointer);
 	}
 
 	_variable.annotation().type = type;

@@ -81,7 +81,7 @@ CompilerStack::CompilerStack(ReadCallback::Callback const& _readFile):
 CompilerStack::~CompilerStack()
 {
 	--g_compilerStackCounts;
-	TypeProvider::get().reset();
+	TypeProvider::reset();
 }
 
 boost::optional<CompilerStack::Remapping> CompilerStack::parseRemapping(string const& _remapping)
@@ -174,7 +174,7 @@ void CompilerStack::reset(bool _keepSettings)
 	m_sourceOrder.clear();
 	m_contracts.clear();
 	m_errorReporter.clear();
-	TypeProvider::get().reset();
+	TypeProvider::reset();
 }
 
 void CompilerStack::setSources(StringMap const& _sources)

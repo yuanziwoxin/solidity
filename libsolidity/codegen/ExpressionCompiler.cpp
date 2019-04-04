@@ -875,8 +875,8 @@ bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 			TypePointer paramType = function.parameterTypes()[0];
 			ArrayType const* arrayType =
 				function.kind() == FunctionType::Kind::ArrayPush ?
-				TypeProvider::get().arrayType(DataLocation::Storage, paramType) :
-				TypeProvider::get().arrayType(DataLocation::Storage);
+				TypeProvider::arrayType(DataLocation::Storage, paramType) :
+				TypeProvider::arrayType(DataLocation::Storage);
 
 			// stack: ArrayReference
 			arguments[0]->accept(*this);
@@ -1062,7 +1062,7 @@ bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 					{
 						FixedHash<4> hash(dev::keccak256(stringType->value()));
 						m_context << (u256(FixedHash<4>::Arith(hash)) << (256 - 32));
-						dataOnStack = TypeProvider::get().fixedBytesType(4);
+						dataOnStack = TypeProvider::fixedBytesType(4);
 					}
 					else
 					{
@@ -1073,7 +1073,7 @@ bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 						m_context << Instruction::KECCAK256;
 						// stack: <memory pointer> <hash>
 
-						dataOnStack = TypeProvider::get().fixedBytesType(32);
+						dataOnStack = TypeProvider::fixedBytesType(32);
 					}
 				}
 				else

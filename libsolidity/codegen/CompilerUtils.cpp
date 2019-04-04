@@ -84,13 +84,13 @@ void CompilerUtils::toSizeAfterFreeMemoryPointer()
 
 void CompilerUtils::revertWithStringData(Type const& _argumentType)
 {
-	solAssert(_argumentType.isImplicitlyConvertibleTo(*TypeProvider::get().fromElementaryTypeName("string memory")), "");
+	solAssert(_argumentType.isImplicitlyConvertibleTo(*TypeProvider::fromElementaryTypeName("string memory")), "");
 	fetchFreeMemoryPointer();
 	m_context << (u256(FixedHash<4>::Arith(FixedHash<4>(dev::keccak256("Error(string)")))) << (256 - 32));
 	m_context << Instruction::DUP2 << Instruction::MSTORE;
 	m_context << u256(4) << Instruction::ADD;
 	// Stack: <string data> <mem pos of encoding start>
-	abiEncode({&_argumentType}, {TypeProvider::get().arrayType(DataLocation::Memory, true)});
+	abiEncode({&_argumentType}, {TypeProvider::arrayType(DataLocation::Memory, true)});
 	toSizeAfterFreeMemoryPointer();
 	m_context << Instruction::REVERT;
 }
@@ -312,7 +312,7 @@ void CompilerUtils::abiDecode(TypePointers const& _typeParameters, bool _fromMem
 			else
 			{
 				// first load from calldata and potentially convert to memory if arrayType is memory
-				TypePointer calldataType = TypeProvider::get().withLocation(&arrayType, DataLocation::CallData, false);
+				TypePointer calldataType = TypeProvider::withLocation(&arrayType, DataLocation::CallData, false);
 				if (calldataType->isDynamicallySized())
 				{
 					// put on stack: data_pointer length

@@ -106,7 +106,7 @@ ImportAnnotation& ImportDirective::annotation() const
 TypePointer ImportDirective::type() const
 {
 	solAssert(!!annotation().sourceUnit, "");
-	return TypeProvider::get().moduleType(*annotation().sourceUnit);
+	return TypeProvider::moduleType(*annotation().sourceUnit);
 }
 
 map<FixedHash<4>, FunctionTypePointer> ContractDefinition::interfaceFunctions() const
@@ -189,10 +189,10 @@ vector<pair<FixedHash<4>, FunctionTypePointer>> const& ContractDefinition::inter
 			vector<FunctionTypePointer> functions;
 			for (FunctionDefinition const* f: contract->definedFunctions())
 				if (f->isPartOfExternalInterface())
-					functions.push_back(TypeProvider::get().functionType(*f, false));
+					functions.push_back(TypeProvider::functionType(*f, false));
 			for (VariableDeclaration const* v: contract->stateVariables())
 				if (v->isPartOfExternalInterface())
-					functions.push_back(TypeProvider::get().functionType(*v));
+					functions.push_back(TypeProvider::functionType(*v));
 			for (FunctionTypePointer const& fun: functions)
 			{
 				if (!fun->interfaceFunctionType())
@@ -247,8 +247,7 @@ vector<Declaration const*> const& ContractDefinition::inheritableMembers() const
 
 TypePointer ContractDefinition::type() const
 {
-	TypeProvider& typeProvider = TypeProvider::get();
-	return typeProvider.typeType(typeProvider.contractType(*this));
+	return TypeProvider::typeType(TypeProvider::contractType(*this));
 }
 
 ContractDefinitionAnnotation& ContractDefinition::annotation() const
@@ -267,7 +266,7 @@ TypeNameAnnotation& TypeName::annotation() const
 
 TypePointer StructDefinition::type() const
 {
-	return TypeProvider::get().typeType(TypeProvider::get().structType(*this));
+	return TypeProvider::typeType(TypeProvider::structType(*this));
 }
 
 TypeDeclarationAnnotation& StructDefinition::annotation() const
@@ -281,12 +280,12 @@ TypePointer EnumValue::type() const
 {
 	auto parentDef = dynamic_cast<EnumDefinition const*>(scope());
 	solAssert(parentDef, "Enclosing Scope of EnumValue was not set");
-	return TypeProvider::get().enumType(*parentDef);
+	return TypeProvider::enumType(*parentDef);
 }
 
 TypePointer EnumDefinition::type() const
 {
-	return TypeProvider::get().typeType(TypeProvider::get().enumType(*this));
+	return TypeProvider::typeType(TypeProvider::enumType(*this));
 }
 
 TypeDeclarationAnnotation& EnumDefinition::annotation() const
@@ -314,7 +313,7 @@ FunctionTypePointer FunctionDefinition::functionType(bool _internal) const
 		case Declaration::Visibility::Private:
 		case Declaration::Visibility::Internal:
 		case Declaration::Visibility::Public:
-			return TypeProvider::get().functionType(*this, _internal);
+			return TypeProvider::functionType(*this, _internal);
 		case Declaration::Visibility::External:
 			return {};
 		}
@@ -330,7 +329,7 @@ FunctionTypePointer FunctionDefinition::functionType(bool _internal) const
 			return {};
 		case Declaration::Visibility::Public:
 		case Declaration::Visibility::External:
-			return TypeProvider::get().functionType(*this, _internal);
+			return TypeProvider::functionType(*this, _internal);
 		}
 	}
 
@@ -341,12 +340,12 @@ FunctionTypePointer FunctionDefinition::functionType(bool _internal) const
 TypePointer FunctionDefinition::type() const
 {
 	solAssert(visibility() != Declaration::Visibility::External, "");
-	return TypeProvider::get().functionType(*this);
+	return TypeProvider::functionType(*this);
 }
 
 string FunctionDefinition::externalSignature() const
 {
-	return TypeProvider::get().functionType(*this)->externalSignature();
+	return TypeProvider::functionType(*this)->externalSignature();
 }
 
 FunctionDefinitionAnnotation& FunctionDefinition::annotation() const
@@ -358,7 +357,7 @@ FunctionDefinitionAnnotation& FunctionDefinition::annotation() const
 
 TypePointer ModifierDefinition::type() const
 {
-	return TypeProvider::get().modifierType(*this);
+	return TypeProvider::modifierType(*this);
 }
 
 ModifierDefinitionAnnotation& ModifierDefinition::annotation() const
@@ -370,13 +369,13 @@ ModifierDefinitionAnnotation& ModifierDefinition::annotation() const
 
 TypePointer EventDefinition::type() const
 {
-	return TypeProvider::get().functionType(*this);
+	return TypeProvider::functionType(*this);
 }
 
 FunctionTypePointer EventDefinition::functionType(bool _internal) const
 {
 	if (_internal)
-		return TypeProvider::get().functionType(*this);
+		return TypeProvider::functionType(*this);
 	else
 		return {};
 }
@@ -569,7 +568,7 @@ FunctionTypePointer VariableDeclaration::functionType(bool _internal) const
 		return nullptr;
 	case Declaration::Visibility::Public:
 	case Declaration::Visibility::External:
-		return TypeProvider::get().functionType(*this);
+		return TypeProvider::functionType(*this);
 	}
 
 	// To make the compiler happy

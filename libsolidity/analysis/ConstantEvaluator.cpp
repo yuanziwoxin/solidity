@@ -57,7 +57,7 @@ void ConstantEvaluator::endVisit(BinaryOperation const& _operation)
 		setType(
 			_operation,
 			TokenTraits::isCompareOp(_operation.getOperator()) ?
-			TypeProvider::get().boolType() :
+			TypeProvider::boolType() :
 			commonType
 		);
 	}
@@ -65,7 +65,7 @@ void ConstantEvaluator::endVisit(BinaryOperation const& _operation)
 
 void ConstantEvaluator::endVisit(Literal const& _literal)
 {
-	setType(_literal, TypeProvider::get().forLiteral(_literal));
+	setType(_literal, TypeProvider::forLiteral(_literal));
 }
 
 void ConstantEvaluator::endVisit(Identifier const& _identifier)

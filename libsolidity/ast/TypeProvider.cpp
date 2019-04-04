@@ -98,19 +98,19 @@ void TypeProvider::reset()
 		m_payableAddressType,
 		m_addressType
 	);
-	clearAllCaches(m_intM, m_uintM, m_bytesM, m_magicTypes);
+	clearAllCaches(get().m_intM, get().m_uintM, get().m_bytesM, get().m_magicTypes);
 
-	m_generalTypes.clear();
-	m_stringLiteralTypes.clear();
-	m_ufixedMxN.clear();
-	m_fixedMxN.clear();
+	get().m_generalTypes.clear();
+	get().m_stringLiteralTypes.clear();
+	get().m_ufixedMxN.clear();
+	get().m_fixedMxN.clear();
 }
 
 template <typename T, typename... Args>
 inline T const* TypeProvider::createAndGet(Args&& ... _args)
 {
-	m_generalTypes.emplace_back(make_unique<T>(std::forward<Args>(_args)...));
-	return static_cast<T const*>(m_generalTypes.back().get());
+	get().m_generalTypes.emplace_back(make_unique<T>(std::forward<Args>(_args)...));
+	return static_cast<T const*>(get().m_generalTypes.back().get());
 }
 
 Type const* TypeProvider::fromElementaryTypeName(ElementaryTypeNameToken const& _type)
@@ -242,16 +242,16 @@ RationalNumberType const* TypeProvider::rationalNumberType(Literal const& _liter
 
 StringLiteralType const* TypeProvider::stringLiteralType(string const& literal)
 {
-	auto i = m_stringLiteralTypes.find(literal);
-	if (i != m_stringLiteralTypes.end())
+	auto i = get().m_stringLiteralTypes.find(literal);
+	if (i != get().m_stringLiteralTypes.end())
 		return i->second.get();
 	else
-		return m_stringLiteralTypes.emplace(literal, make_unique<StringLiteralType>(literal)).first->second.get();
+		return get().m_stringLiteralTypes.emplace(literal, make_unique<StringLiteralType>(literal)).first->second.get();
 }
 
 FixedPointType const* TypeProvider::fixedPointType(unsigned m, unsigned n, FixedPointType::Modifier _modifier)
 {
-	auto& map = _modifier == FixedPointType::Modifier::Unsigned ? m_ufixedMxN : m_fixedMxN;
+	auto& map = _modifier == FixedPointType::Modifier::Unsigned ? get().m_ufixedMxN : get().m_fixedMxN;
 
 	auto i = map.find(make_pair(m, n));
 	if (i != map.end())
@@ -280,8 +280,8 @@ ReferenceType const* TypeProvider::withLocation(ReferenceType const* _type, Data
 	if (_type->location() == _location && _type->isPointer() == _isPointer)
 		return _type;
 
-	m_generalTypes.emplace_back(_type->copyForLocation(_location, _isPointer));
-	return static_cast<ReferenceType const*>(m_generalTypes.back().get());
+	get().m_generalTypes.emplace_back(_type->copyForLocation(_location, _isPointer));
+	return static_cast<ReferenceType const*>(get().m_generalTypes.back().get());
 }
 
 FunctionType const* TypeProvider::functionType(FunctionDefinition const& _function, bool _isInternal)

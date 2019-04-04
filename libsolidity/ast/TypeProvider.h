@@ -54,49 +54,40 @@ public:
 	 *
 	 * This invalidates all dangling pointers to types provided by this TypeProvider.
 	 */
-	void reset();
-
-	/**
-	 * Global TypeProvider instance.
-	 */
-	static TypeProvider& get()
-	{
-		static TypeProvider _provider;
-		return _provider;
-	}
+	static void reset();
 
 	/// @name Factory functions
 	/// Factory functions that convert an AST @ref TypeName to a Type.
-	Type const* fromElementaryTypeName(ElementaryTypeNameToken const& _type);
+	static Type const* fromElementaryTypeName(ElementaryTypeNameToken const& _type);
 
 	/// Converts a given elementary type name with optional data location
 	/// suffix " storage", " calldata" or " memory" to a type pointer. If suffix not given, defaults to " storage".
-	TypePointer fromElementaryTypeName(std::string const& _name);
+	static TypePointer fromElementaryTypeName(std::string const& _name);
 
 	/// @returns boolean type.
-	BoolType const* boolType() const noexcept { return &m_boolType; }
+	static BoolType const* boolType() noexcept { return &m_boolType; }
 
-	FixedBytesType const* byteType() { return fixedBytesType(1); }
-	FixedBytesType const* fixedBytesType(unsigned m) { return &m_bytesM.at(m - 1); }
+	static FixedBytesType const* byteType() { return fixedBytesType(1); }
+	static FixedBytesType const* fixedBytesType(unsigned m) { return &m_bytesM.at(m - 1); }
 
-	ArrayType const* bytesType() const noexcept { return &m_bytesType; }
-	ArrayType const* bytesMemoryType() const noexcept { return &m_bytesMemoryType; }
-	ArrayType const* stringType() const noexcept { return &m_stringType; }
-	ArrayType const* stringMemoryType() const noexcept { return &m_stringMemoryType; }
+	static ArrayType const* bytesType() noexcept { return &m_bytesType; }
+	static ArrayType const* bytesMemoryType() noexcept { return &m_bytesMemoryType; }
+	static ArrayType const* stringType() noexcept { return &m_stringType; }
+	static ArrayType const* stringMemoryType() noexcept { return &m_stringMemoryType; }
 
 	/// Constructor for a byte array ("bytes") and string.
-	ArrayType const* arrayType(DataLocation _location, bool _isString = false);
+	static ArrayType const* arrayType(DataLocation _location, bool _isString = false);
 
 	/// Constructor for a dynamically sized array type ("type[]")
-	ArrayType const* arrayType(DataLocation _location, Type const* _baseType);
+	static ArrayType const* arrayType(DataLocation _location, Type const* _baseType);
 
 	/// Constructor for a fixed-size array type ("type[20]")
-	ArrayType const* arrayType(DataLocation _location, Type const* _baseType, u256 const& _length);
+	static ArrayType const* arrayType(DataLocation _location, Type const* _baseType, u256 const& _length);
 
-	AddressType const* payableAddressType() const noexcept { return &m_payableAddressType; }
-	AddressType const* addressType() const noexcept { return &m_addressType; }
+	static AddressType const* payableAddressType() noexcept { return &m_payableAddressType; }
+	static AddressType const* addressType() noexcept { return &m_addressType; }
 
-	IntegerType const* integerType(unsigned _bits = 256, IntegerType::Modifier _modifier = IntegerType::Modifier::Unsigned)
+	static IntegerType const* integerType(unsigned _bits = 256, IntegerType::Modifier _modifier = IntegerType::Modifier::Unsigned)
 	{
 		solAssert((_bits % 8) == 0, "");
 		if (_modifier == IntegerType::Modifier::Unsigned)
@@ -105,27 +96,27 @@ public:
 			return &m_intM.at(_bits / 8 - 1);
 	}
 
-	FixedPointType const* fixedPointType(unsigned m, unsigned n, FixedPointType::Modifier _modifier);
+	static FixedPointType const* fixedPointType(unsigned m, unsigned n, FixedPointType::Modifier _modifier);
 
-	StringLiteralType const* stringLiteralType(std::string const& literal);
+	static StringLiteralType const* stringLiteralType(std::string const& literal);
 
 	/**
 	 * @param members the member types the tuple type must contain. This is passed by value on purspose.
 	 * @returns a tuple type with the given members.
 	 */
-	TupleType const* tupleType(std::vector<Type const*> members);
+	static TupleType const* tupleType(std::vector<Type const*> members);
 
-	TupleType const* emptyTupleType() const noexcept { return &m_emptyTupleType; }
+	static TupleType const* emptyTupleType() noexcept { return &m_emptyTupleType; }
 
 	/// @returns a suitably simple type when a type is expected but an error has occurred.
-	TupleType const* errorType() const noexcept { return emptyTupleType(); }
+	static TupleType const* errorType() noexcept { return emptyTupleType(); }
 
-	ReferenceType const* withLocation(ReferenceType const* _type, DataLocation _location, bool _isPointer);
+	static ReferenceType const* withLocation(ReferenceType const* _type, DataLocation _location, bool _isPointer);
 
 	/// @returns a copy of @a _type having the same location as this (and is not a pointer type)
 	///          if _type is a reference type and an unmodified copy of _type otherwise.
 	///          This function is mostly useful to modify inner types appropriately.
-	Type const* withLocationIfReference(DataLocation _location, Type const* _type)
+	static Type const* withLocationIfReference(DataLocation _location, Type const* _type)
 	{
 		if (auto refType = dynamic_cast<ReferenceType const*>(_type))
 			return withLocation(refType, _location, false);
@@ -134,19 +125,19 @@ public:
 	}
 
 	/// @returns the type of a function.
-	FunctionType const* functionType(FunctionDefinition const& _function, bool _isInternal = true);
+	static FunctionType const* functionType(FunctionDefinition const& _function, bool _isInternal = true);
 
 	/// @returns the accessor function type of a state variable.
-	FunctionType const* functionType(VariableDeclaration const& _varDecl);
+	static FunctionType const* functionType(VariableDeclaration const& _varDecl);
 
 	/// @returns the function type of an event.
-	FunctionType const* functionType(EventDefinition const& _event);
+	static FunctionType const* functionType(EventDefinition const& _event);
 
 	/// @returns the type of a function type name.
-	FunctionType const* functionType(FunctionTypeName const& _typeName);
+	static FunctionType const* functionType(FunctionTypeName const& _typeName);
 
 	/// @returns the function type to be used for a plain type (not derived from a declaration).
-	FunctionType const* functionType(
+	static FunctionType const* functionType(
 		strings const& _parameterTypes,
 		strings const& _returnParameterTypes,
 		FunctionType::Kind _kind = FunctionType::Kind::Internal,
@@ -155,7 +146,7 @@ public:
 	);
 
 	/// @returns a highly customized FunctionType, use with care.
-	FunctionType const* functionType(
+	static FunctionType const* functionType(
 		TypePointers const& _parameterTypes,
 		TypePointers const& _returnParameterTypes,
 		strings _parameterNames = strings{},
@@ -171,39 +162,48 @@ public:
 
 	/// Auto-detect the proper type for a literal. @returns an empty pointer if the literal does
 	/// not fit any type.
-	TypePointer forLiteral(Literal const& _literal);
-	RationalNumberType const* rationalNumberType(Literal const& _literal);
+	static TypePointer forLiteral(Literal const& _literal);
+	static RationalNumberType const* rationalNumberType(Literal const& _literal);
 
-	RationalNumberType const* rationalNumberType(
+	static RationalNumberType const* rationalNumberType(
 		rational const& _value,
 		Type const* _compatibleBytesType = nullptr
 	);
 
-	ContractType const* contractType(ContractDefinition const& _contract, bool _isSuper = false);
+	static ContractType const* contractType(ContractDefinition const& _contract, bool _isSuper = false);
 
-	InaccessibleDynamicType const* inaccessibleDynamicType() const noexcept { return &m_inaccessibleDynamicType; }
+	static InaccessibleDynamicType const* inaccessibleDynamicType() noexcept { return &m_inaccessibleDynamicType; }
 
 	/// @returns the type of an enum instance for given definition, there is one distinct type per enum definition.
-	EnumType const* enumType(EnumDefinition const& _enum);
+	static EnumType const* enumType(EnumDefinition const& _enum);
 
 	/// @returns special type for imported modules. These mainly give access to their scope via members.
-	ModuleType const* moduleType(SourceUnit const& _source);
+	static ModuleType const* moduleType(SourceUnit const& _source);
 
-	TypeType const* typeType(Type const* _actualType);
+	static TypeType const* typeType(Type const* _actualType);
 
-	StructType const* structType(StructDefinition const& _struct, DataLocation _location = DataLocation::Storage);
+	static StructType const* structType(StructDefinition const& _struct, DataLocation _location = DataLocation::Storage);
 
-	ModifierType const* modifierType(ModifierDefinition const& _modifierDef);
+	static ModifierType const* modifierType(ModifierDefinition const& _modifierDef);
 
-	MagicType const* magicType(MagicType::Kind _kind);
+	static MagicType const* magicType(MagicType::Kind _kind);
 
-	MagicType const* metaType(Type const* _type);
+	static MagicType const* metaType(Type const* _type);
 
-	MappingType const* mappingType(Type const* _keyType, Type const* _valueType);
+	static MappingType const* mappingType(Type const* _keyType, Type const* _valueType);
 
 private:
+	/**
+	 * Global TypeProvider instance.
+	 */
+	static TypeProvider& get()
+	{
+		static TypeProvider _provider;
+		return _provider;
+	}
+
 	template <typename T, typename... Args>
-	inline T const* createAndGet(Args&& ... _args);
+	static inline T const* createAndGet(Args&& ... _args);
 
 	static BoolType const m_boolType;
 	static InaccessibleDynamicType const m_inaccessibleDynamicType;

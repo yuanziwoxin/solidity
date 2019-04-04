@@ -177,10 +177,10 @@ TypePointers TypeChecker::typeCheckABIDecodeAndRetrieveReturnType(FunctionCall c
 			// We force memory because the parser currently cannot handle
 			// data locations. Furthermore, storage can be a little dangerous and
 			// calldata is not really implemented anyway.
-			actualType = m_typeProvider.withLocationIfReference(DataLocation::Memory, actualType);
+			actualType = TypeProvider::withLocationIfReference(DataLocation::Memory, actualType);
 			// We force address payable for address types.
 			if (actualType->category() == Type::Category::Address)
-				actualType = m_typeProvider.payableAddressType();
+				actualType = TypeProvider::payableAddressType();
 			solAssert(
 				!actualType->dataStoredIn(DataLocation::CallData) &&
 				!actualType->dataStoredIn(DataLocation::Storage),
@@ -196,7 +196,7 @@ TypePointers TypeChecker::typeCheckABIDecodeAndRetrieveReturnType(FunctionCall c
 		else
 		{
 			m_errorReporter.typeError(typeArgument->location(), "Argument has to be a type name.");
-			components.push_back(m_typeProvider.errorType());
+			components.push_back(TypeProvider::errorType());
 		}
 	}
 	return components;
@@ -1177,7 +1177,7 @@ bool TypeChecker::visit(Assignment const& _assignment)
 				"Compound assignment is not allowed for tuple types."
 			);
 		// Sequenced assignments of tuples is not valid, make the result a "void" type.
-		_assignment.annotation().type = m_typeProvider.emptyTupleType();
+		_assignment.annotation().type = TypeProvider::emptyTupleType();
 
 		expectType(_assignment.rightHandSide(), *tupleType);
 
@@ -1229,7 +1229,7 @@ bool TypeChecker::visit(TupleExpression const& _tuple)
 		if (components.size() == 1)
 			_tuple.annotation().type = type(*components[0]);
 		else
-			_tuple.annotation().type = m_typeProvider.tupleType(move(types));
+			_tuple.annotation().type = TypeProvider::tupleType(move(types));
 		// If some of the components are not LValues, the error is reported above.
 		_tuple.annotation().isLValue = true;
 	}
@@ -1286,14 +1286,14 @@ bool TypeChecker::visit(TupleExpression const& _tuple)
 			else if (!inlineArrayType->canLiveOutsideStorage())
 				m_errorReporter.fatalTypeError(_tuple.location(), "Type " + inlineArrayType->toString() + " is only valid in storage.");
 
-			_tuple.annotation().type = m_typeProvider.arrayType(DataLocation::Memory, inlineArrayType, types.size());
+			_tuple.annotation().type = TypeProvider::arrayType(DataLocation::Memory, inlineArrayType, types.size());
 		}
 		else
 		{
 			if (components.size() == 1)
 				_tuple.annotation().type = type(*components[0]);
 			else
-				_tuple.annotation().type = m_typeProvider.tupleType(move(types));
+				_tuple.annotation().type = TypeProvider::tupleType(move(types));
 		}
 
 	}
@@ -1350,7 +1350,7 @@ void TypeChecker::endVisit(BinaryOperation const& _operation)
 	_operation.annotation().commonType = commonType;
 	_operation.annotation().type =
 		TokenTraits::isCompareOp(_operation.getOperator()) ?
-		m_typeProvider.boolType() :
+		TypeProvider::boolType() :
 		commonType;
 	_operation.annotation().isPure =
 		_operation.leftExpression().annotation().isPure &&
@@ -1410,7 +1410,7 @@ TypePointer TypeChecker::typeCheckTypeConversionAndRetrieveReturnType(
 		if (auto argRefType = dynamic_cast<ReferenceType const*>(argType))
 			dataLoc = argRefType->location();
 		if (auto type = dynamic_cast<ReferenceType const*>(resultType))
-			resultType = m_typeProvider.withLocation(type, dataLoc, type->isPointer());
+			resultType = TypeProvider::withLocation(type, dataLoc, type->isPointer());
 		if (argType->isExplicitlyConvertibleTo(*resultType))
 		{
 			if (auto argArrayType = dynamic_cast<ArrayType const*>(argType))
@@ -1476,7 +1476,7 @@ TypePointer TypeChecker::typeCheckTypeConversionAndRetrieveReturnType(
 		if (resultType->category() == Type::Category::Address)
 		{
 			bool const payable = argType->isExplicitlyConvertibleTo(AddressType::addressPayable());
-			resultType = payable ? m_typeProvider.payableAddressType() : m_typeProvider.addressType();
+			resultType = payable ? TypeProvider::payableAddressType() : TypeProvider::addressType();
 		}
 	}
 	return resultType;
@@ -1925,7 +1925,7 @@ bool TypeChecker::visit(FunctionCall const& _functionCall)
 
 		funcCallAnno.type = returnTypes.size() == 1 ?
 			move(returnTypes.front()) :
-			m_typeProvider.tupleType(move(returnTypes));
+			TypeProvider::tupleType(move(returnTypes));
 
 		break;
 	}
@@ -1935,7 +1935,7 @@ bool TypeChecker::visit(FunctionCall const& _functionCall)
 		// for non-callables, ensure error reported and annotate node to void function
 		solAssert(m_errorReporter.hasErrors(), "");
 		funcCallAnno.kind = FunctionCallKind::FunctionCall;
-		funcCallAnno.type = m_typeProvider.emptyTupleType();
+		funcCallAnno.type = TypeProvider::emptyTupleType();
 		break;
 	}
 
@@ -1998,8 +1998,8 @@ void TypeChecker::endVisit(NewExpression const& _newExpression)
 				"Length has to be placed in parentheses after the array type for new expression."
 			);
 		type = ReferenceType::copyForLocationIfReference(DataLocation::Memory, type);
-		_newExpression.annotation().type = m_typeProvider.functionType(
-			TypePointers{m_typeProvider.integerType(256)},
+		_newExpression.annotation().type = TypeProvider::functionType(
+			TypePointers{TypeProvider::integerType(256)},
 			TypePointers{type},
 			strings(1, ""),
 			strings(1, ""),
@@ -2225,7 +2225,7 @@ bool TypeChecker::visit(IndexAccess const& _access)
 		if (dynamic_cast<ContractType const*>(typeType.actualType()))
 			m_errorReporter.typeError(_access.location(), "Index access for contracts or libraries is not possible.");
 		if (!index)
-			resultType = m_typeProvider.typeType(m_typeProvider.arrayType(DataLocation::Memory, typeType.actualType()));
+			resultType = TypeProvider::typeType(TypeProvider::arrayType(DataLocation::Memory, typeType.actualType()));
 		else
 		{
 			u256 length = 1;
@@ -2239,7 +2239,7 @@ bool TypeChecker::visit(IndexAccess const& _access)
 			else
 				solAssert(m_errorReporter.hasErrors(), "Expected errors as expectType returned false");
 
-			resultType = m_typeProvider.typeType(m_typeProvider.arrayType(
+			resultType = TypeProvider::typeType(TypeProvider::arrayType(
 				DataLocation::Memory,
 				typeType.actualType(),
 				length
@@ -2260,7 +2260,7 @@ bool TypeChecker::visit(IndexAccess const& _access)
 				if (bytesType.numBytes() <= integerType->literalValue(nullptr))
 					m_errorReporter.typeError(_access.location(), "Out of bounds array access.");
 		}
-		resultType = m_typeProvider.fixedBytesType(1);
+		resultType = TypeProvider::fixedBytesType(1);
 		isLValue = false; // @todo this heavily depends on how it is embedded
 		break;
 	}
@@ -2364,7 +2364,7 @@ bool TypeChecker::visit(Identifier const& _identifier)
 
 void TypeChecker::endVisit(ElementaryTypeNameExpression const& _expr)
 {
-	_expr.annotation().type = m_typeProvider.typeType(m_typeProvider.fromElementaryTypeName(_expr.typeName()));
+	_expr.annotation().type = TypeProvider::typeType(TypeProvider::fromElementaryTypeName(_expr.typeName()));
 	_expr.annotation().isPure = true;
 }
 
@@ -2373,7 +2373,7 @@ void TypeChecker::endVisit(Literal const& _literal)
 	if (_literal.looksLikeAddress())
 	{
 		// Assign type here if it even looks like an address. This prevents double errors for invalid addresses
-		_literal.annotation().type = m_typeProvider.payableAddressType();
+		_literal.annotation().type = TypeProvider::payableAddressType();
 
 		string msg;
 		if (_literal.valueWithoutUnderscores().length() != 42) // "0x" + 40 hex digits
@@ -2412,7 +2412,7 @@ void TypeChecker::endVisit(Literal const& _literal)
 		);
 
 	if (!_literal.annotation().type)
-		_literal.annotation().type = m_typeProvider.forLiteral(_literal);
+		_literal.annotation().type = TypeProvider::forLiteral(_literal);
 
 	if (!_literal.annotation().type)
 		m_errorReporter.fatalTypeError(_literal.location(), "Invalid literal value.");
