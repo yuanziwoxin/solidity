@@ -51,9 +51,9 @@ using return_type = std::array<typename return_type_helper<D, Types...>::type, s
 
 } // namespace details
 
-/// C++14 compatible implementation of std::make_array() from C++17.
+/// C++14 compatible implementation of std::experimental::make_array() from library fundamentals TS v2.
 template <class D = void, class... Types>
-constexpr details::return_type<D, Types...> makeArray(Types&&... t)
+constexpr details::return_type<D, Types...> make_array(Types&&... t)
 {
 	return { std::forward<Types>(t)... };
 }

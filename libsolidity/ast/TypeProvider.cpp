@@ -16,8 +16,7 @@
 */
 
 #include <libsolidity/ast/TypeProvider.h>
-#include <libdevcore/ArrayUtil.h>
-
+#include <libdevcore/make_array.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
 
@@ -26,15 +25,15 @@ using namespace dev;
 using namespace solidity;
 
 template <size_t... N>
-constexpr std::array<IntegerType, sizeof...(N)> createIntegerTypes(IntegerType::Modifier _modifier, std::index_sequence<N...>)
+constexpr array<IntegerType, sizeof...(N)> createIntegerTypes(IntegerType::Modifier _modifier, index_sequence<N...>)
 {
-	return makeArray<IntegerType>(IntegerType((static_cast<unsigned>(N) + 1) * 8, _modifier)...);
+	return make_array<IntegerType>(IntegerType((static_cast<unsigned>(N) + 1) * 8, _modifier)...);
 }
 
 template <size_t... N>
-constexpr std::array<FixedBytesType, sizeof...(N)> createFixedBytesTypes(std::index_sequence<N...>)
+constexpr array<FixedBytesType, sizeof...(N)> createFixedBytesTypes(index_sequence<N...>)
 {
-	return makeArray<FixedBytesType>(FixedBytesType(static_cast<unsigned>(N) + 1)...);
+	return make_array<FixedBytesType>(FixedBytesType(static_cast<unsigned>(N) + 1)...);
 }
 
 BoolType const TypeProvider::m_boolType{};
