@@ -15607,6 +15607,38 @@ BOOST_AUTO_TEST_CASE(contract_name)
 	ABI_CHECK(callContractFunction("constantNameAccessor()"), argsLong);
 }
 
+BOOST_AUTO_TEST_CASE(event_wrong_abi_name)
+{
+	char const* sourceCode = R"(
+		contract Another {
+			uint xx;
+			function abc() public {}
+		}
+		library ClientReceipt {
+			event Deposit(Another indexed _from, bytes32 indexed _id, uint _value);
+			function deposit(bytes32 _id) public {
+				Another a;
+				emit Deposit(a, _id, msg.value);
+			}
+		}
+		contract Test {
+			function f() public {
+				ClientReceipt.deposit("123");
+			}
+		}
+	)";
+	compileAndRun(sourceCode, 0, "Another");
+	compileAndRun(sourceCode, 0, "ClientReceipt", bytes(), map<string, Address>{{"Another", m_contractAddress}});
+	compileAndRun(sourceCode, 0, "Test", bytes(), map<string, Address>{{"ClientReceipt", m_contractAddress}});
+	u256 value(18);
+	u256 id(0x1234);
+
+	callContractFunction("f()");
+	BOOST_REQUIRE_EQUAL(m_logs.size(), 1);
+	BOOST_CHECK_EQUAL(m_logs[0].address, m_contractAddress);
+	BOOST_REQUIRE_EQUAL(m_logs[0].topics.size(), 3);
+	BOOST_CHECK_EQUAL(m_logs[0].topics[0], dev::keccak256(string("Deposit(address,bytes32,uint256)")));
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 
