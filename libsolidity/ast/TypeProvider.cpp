@@ -45,10 +45,10 @@ ArrayType const TypeProvider::m_stringMemoryType{DataLocation::Memory, true};
 TupleType const TypeProvider::m_emptyTupleType{};
 AddressType const TypeProvider::m_payableAddressType{StateMutability::Payable};
 AddressType const TypeProvider::m_addressType{StateMutability::NonPayable};
-std::array<IntegerType, 32> const TypeProvider::m_intM{createIntegerTypes(IntegerType::Modifier::Signed, std::make_index_sequence<32>{})};
-std::array<IntegerType, 32> const TypeProvider::m_uintM{createIntegerTypes(IntegerType::Modifier::Unsigned, std::make_index_sequence<32>{})};
-std::array<FixedBytesType, 32> const TypeProvider::m_bytesM{createFixedBytesTypes(std::make_index_sequence<32>{})};
-std::array<MagicType, 4> const TypeProvider::m_magicTypes{
+array<IntegerType, 32> const TypeProvider::m_intM{createIntegerTypes(IntegerType::Modifier::Signed, make_index_sequence<32>{})};
+array<IntegerType, 32> const TypeProvider::m_uintM{createIntegerTypes(IntegerType::Modifier::Unsigned, make_index_sequence<32>{})};
+array<FixedBytesType, 32> const TypeProvider::m_bytesM{createFixedBytesTypes(make_index_sequence<32>{})};
+array<MagicType, 4> const TypeProvider::m_magicTypes{
 	MagicType{MagicType::Kind::Block},
 	MagicType{MagicType::Kind::Message},
 	MagicType{MagicType::Kind::Transaction},
@@ -109,7 +109,7 @@ void TypeProvider::reset()
 template <typename T, typename... Args>
 inline T const* TypeProvider::createAndGet(Args&& ... _args)
 {
-	m_generalTypes.emplace_back(std::make_unique<T>(std::forward<Args>(_args)...));
+	m_generalTypes.emplace_back(make_unique<T>(std::forward<Args>(_args)...));
 	return static_cast<T const*>(m_generalTypes.back().get());
 }
 
@@ -205,13 +205,13 @@ TypePointer TypeProvider::fromElementaryTypeName(string const& _name)
 	}
 }
 
-StringLiteralType const* TypeProvider::stringLiteralType(std::string const& literal)
+StringLiteralType const* TypeProvider::stringLiteralType(string const& literal)
 {
 	auto i = m_stringLiteralTypes.find(literal);
 	if (i != m_stringLiteralTypes.end())
 		return i->second.get();
 	else
-		return m_stringLiteralTypes.emplace(literal, std::make_unique<StringLiteralType>(literal)).first->second.get();
+		return m_stringLiteralTypes.emplace(literal, make_unique<StringLiteralType>(literal)).first->second.get();
 }
 
 FixedPointType const* TypeProvider::fixedPointType(unsigned m, unsigned n, FixedPointType::Modifier _modifier)
@@ -232,7 +232,7 @@ FixedPointType const* TypeProvider::fixedPointType(unsigned m, unsigned n, Fixed
 	).first->second.get();
 }
 
-TupleType const* TypeProvider::tupleType(std::vector<Type const*>&& members)
+TupleType const* TypeProvider::tupleType(vector<Type const*> members)
 {
 	if (members.empty())
 		return &m_emptyTupleType;

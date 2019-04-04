@@ -109,7 +109,11 @@ public:
 
 	StringLiteralType const* stringLiteralType(std::string const& literal);
 
-	TupleType const* tupleType(std::vector<Type const*>&& members);
+	/**
+	 * @param members the member types the tuple type must contain. This is passed by value on purspose.
+	 * @returns a tuple type with the given members.
+	 */
+	TupleType const* tupleType(std::vector<Type const*> members);
 
 	TupleType const* emptyTupleType() const noexcept { return &m_emptyTupleType; }
 
