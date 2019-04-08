@@ -35,9 +35,10 @@ bool IRGeneratorForStatements::visit(VariableDeclarationStatement const& _varDec
 		if (decl)
 			m_context.addLocalVariable(*decl);
 
-	solUnimplementedAssert(_varDeclStatement.declarations().size() == 1, "");
 	if (Expression const* expression = _varDeclStatement.initialValue())
 	{
+		solUnimplementedAssert(_varDeclStatement.declarations().size() == 1, "");
+
 		expression->accept(*this);
 
 		solUnimplementedAssert(
@@ -118,12 +119,11 @@ bool IRGeneratorForStatements::visit(FunctionCall const& _functionCall)
 		// named arguments
 		for (auto const& parameterName: functionType->parameterNames())
 		{
-			bool found = false;
-			for (size_t j = 0; j < callArgumentNames.size() && !found; j++)
-				if ((found = (parameterName == *callArgumentNames[j])))
-					// we found the actual parameter position
-					arguments.push_back(callArguments[j]);
-			solAssert(found, "");
+			auto it = std::find(callArgumentNames.begin(), callArgumentNames.end(), [&](auto const& _argName) {
+				return *_argName == parameterName;
+			});
+			solAssert(it != callArgumentNames.end(), "");
+			arguments.push_back(callArguments[std::distance(callArgumentNames.begin(), it)]);
 		}
 
 	solUnimplementedAssert(!functionType->bound(), "");

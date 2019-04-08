@@ -120,12 +120,10 @@ string IRGenerationContext::internalDispatch(size_t _in, size_t _out)
 					function->parameters().size() == _in &&
 					function->returnParameters().size() == _out
 				)
-				{
-					map<string, string> f;
-					f["funID"] = to_string(function->id());
-					f["name"] = functionName(*function);
-					functions.emplace_back(move(f));
-				}
+					functions.emplace_back(map<string, string> {
+						{ "funID", to_string(function->id()) },
+						{ "name", functionName(*function)}
+					});
 		templ("cases", move(functions));
 		return templ.render();
 	});
