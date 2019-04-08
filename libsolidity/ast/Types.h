@@ -45,6 +45,7 @@ namespace dev
 namespace solidity
 {
 
+class TypeProvider;
 class Type; // forward
 class FunctionType; // forward
 using TypePointer = Type const*;
@@ -332,13 +333,13 @@ protected:
  */
 class AddressType: public Type
 {
+	explicit AddressType(StateMutability _stateMutability);
+
 public:
 	static AddressType const& address();
 	static AddressType const& addressPayable();
 
 	Category category() const override { return Category::Address; }
-
-	explicit AddressType(StateMutability _stateMutability);
 
 	std::string richIdentifier() const override;
 	BoolResult isImplicitlyConvertibleTo(Type const& _other) const override;
@@ -380,11 +381,14 @@ public:
 		Unsigned, Signed
 	};
 
+private:
+	explicit IntegerType(unsigned _bits, Modifier _modifier = Modifier::Unsigned);
+	friend class TypeProvider;
+
+public:
 	static IntegerType const& uint256();
 
 	Category category() const override { return Category::Integer; }
-
-	explicit IntegerType(unsigned _bits, Modifier _modifier = Modifier::Unsigned);
 
 	IntegerType(IntegerType&&) = default;
 	IntegerType& operator=(IntegerType&&) = default;
@@ -431,9 +435,12 @@ public:
 	{
 		Unsigned, Signed
 	};
-	Category category() const override { return Category::FixedPoint; }
-
+private:
 	explicit FixedPointType(unsigned _totalBits, unsigned _fractionalDigits, Modifier _modifier = Modifier::Unsigned);
+	friend class TypeProvider;
+
+public:
+	Category category() const override { return Category::FixedPoint; }
 
 	std::string richIdentifier() const override;
 	BoolResult isImplicitlyConvertibleTo(Type const& _convertTo) const override;
@@ -481,13 +488,15 @@ private:
  */
 class RationalNumberType: public Type
 {
-public:
-
-	Category category() const override { return Category::RationalNumber; }
+	friend class TypeProvider;
 
 	explicit RationalNumberType(rational const& _value, Type const* _compatibleBytesType = nullptr):
 		m_value(_value), m_compatibleBytesType(_compatibleBytesType)
 	{}
+
+public:
+	Category category() const override { return Category::RationalNumber; }
+
 	BoolResult isImplicitlyConvertibleTo(Type const& _convertTo) const override;
 	BoolResult isExplicitlyConvertibleTo(Type const& _convertTo) const override;
 	TypeResult unaryOperatorResult(Token _operator) const override;
@@ -542,11 +551,12 @@ private:
  */
 class StringLiteralType: public Type
 {
-public:
-	Category category() const override { return Category::StringLiteral; }
-
+	friend class TypeProvider;
 	explicit StringLiteralType(Literal const& _literal);
 	explicit StringLiteralType(std::string const& _value);
+
+public:
+	Category category() const override { return Category::StringLiteral; }
 
 	BoolResult isImplicitlyConvertibleTo(Type const& _convertTo) const override;
 	TypeResult binaryOperatorResult(Token, Type const*) const override
@@ -577,10 +587,11 @@ private:
  */
 class FixedBytesType: public Type
 {
+	friend class TypeProvider;
+	explicit FixedBytesType(unsigned _bytes);
+
 public:
 	Category category() const override { return Category::FixedBytes; }
-
-	explicit FixedBytesType(unsigned _bytes);
 
 	FixedBytesType(FixedBytesType const&) = delete;
 	FixedBytesType& operator=(FixedBytesType const&) = delete;
@@ -616,6 +627,9 @@ private:
  */
 class BoolType: public Type
 {
+	friend class TypeProvider;
+	BoolType() = default;
+
 public:
 	Category category() const override { return Category::Bool; }
 	std::string richIdentifier() const override { return "t_bool"; }
@@ -639,8 +653,10 @@ public:
  */
 class ReferenceType: public Type
 {
-public:
+protected:
 	explicit ReferenceType(DataLocation _location): m_location(_location) {}
+
+public:
 	DataLocation location() const { return m_location; }
 
 	TypeResult unaryOperatorResult(Token _operator) const override;
@@ -696,11 +712,7 @@ protected:
  */
 class ArrayType: public ReferenceType
 {
-public:
-	static ArrayType const& bytesMemory();
-	static ArrayType const& stringMemory();
-
-	Category category() const override { return Category::Array; }
+	friend class TypeProvider;
 
 	/// Constructor for a byte array ("bytes") and string.
 	explicit ArrayType(DataLocation _location, bool _isString = false);
@@ -711,6 +723,7 @@ public:
 		m_baseType(copyForLocationIfReference(_baseType))
 	{
 	}
+
 	/// Constructor for a fixed-size array type ("type[20]")
 	ArrayType(DataLocation _location, Type const* _baseType, u256 const& _length):
 		ReferenceType(_location),
@@ -718,6 +731,12 @@ public:
 		m_hasDynamicLength(false),
 		m_length(_length)
 	{}
+
+public:
+	static ArrayType const& bytesMemory();
+	static ArrayType const& stringMemory();
+
+	Category category() const override { return Category::Array; }
 
 	BoolResult isImplicitlyConvertibleTo(Type const& _convertTo) const override;
 	BoolResult isExplicitlyConvertibleTo(Type const& _convertTo) const override;
@@ -779,10 +798,13 @@ private:
  */
 class ContractType: public Type
 {
-public:
-	Category category() const override { return Category::Contract; }
+	friend class TypeProvider;
+
 	explicit ContractType(ContractDefinition const& _contract, bool _super = false):
 		m_contract(_contract), m_super(_super) {}
+
+public:
+	Category category() const override { return Category::Contract; }
 	/// Contracts can be implicitly converted only to base contracts.
 	BoolResult isImplicitlyConvertibleTo(Type const& _convertTo) const override;
 	/// Contracts can only be explicitly converted to address types and base contracts.
@@ -852,10 +874,13 @@ private:
  */
 class StructType: public ReferenceType
 {
-public:
-	Category category() const override { return Category::Struct; }
+	friend class TypeProvider;
+
 	explicit StructType(StructDefinition const& _struct, DataLocation _location = DataLocation::Storage):
 		ReferenceType(_location), m_struct(_struct) {}
+
+public:
+	Category category() const override { return Category::Struct; }
 	BoolResult isImplicitlyConvertibleTo(Type const& _convertTo) const override;
 	std::string richIdentifier() const override;
 	bool operator==(Type const& _other) const override;
@@ -869,13 +894,14 @@ public:
 	MemberList::MemberMap nativeMembers(ContractDefinition const* _currentScope) const override;
 
 	mutable std::unique_ptr<IntegerType> m_encodingType; // TODO private
+
 	Type const* encodingType() const override
 	{
 		if (location() != DataLocation::Storage)
 			return this;
 
 		if (!m_encodingType)
-			m_encodingType = std::make_unique<IntegerType>(256);
+			m_encodingType = std::make_unique<IntegerType>(256); // TODO: oh wow
 
 		return m_encodingType.get();
 	}
@@ -926,9 +952,11 @@ private:
  */
 class EnumType: public Type
 {
+	friend class TypeProvider;
+	explicit EnumType(EnumDefinition const& _enum): m_enum(_enum) {}
+
 public:
 	Category category() const override { return Category::Enum; }
-	explicit EnumType(EnumDefinition const& _enum): m_enum(_enum) {}
 	TypeResult unaryOperatorResult(Token _operator) const override;
 	std::string richIdentifier() const override;
 	bool operator==(Type const& _other) const override;
@@ -971,9 +999,11 @@ private:
  */
 class TupleType: public Type
 {
+	friend class TypeProvider;
+	explicit TupleType(std::vector<TypePointer> _types = {}): m_components(std::move(_types)) {}
+
 public:
 	Category category() const override { return Category::Tuple; }
-	explicit TupleType(std::vector<TypePointer> _types = {}): m_components(std::move(_types)) {}
 	TupleType(TupleType&&) = default;
 	TupleType& operator=(TupleType&) = default;
 
@@ -1050,7 +1080,8 @@ public:
 		MetaType ///< type(...)
 	};
 
-	Category category() const override { return Category::Function; }
+private:
+	friend class TypeProvider;
 
 	/// Creates the type of a function.
 	explicit FunctionType(FunctionDefinition const& _function, bool _isInternal = true);
@@ -1078,9 +1109,6 @@ public:
 	)
 	{
 	}
-
-	/// @returns the type of the "new Contract" function, i.e. basically the constructor.
-	static FunctionTypePointer newExpressionType(ContractDefinition const& _contract);
 
 	/// Detailed constructor, use with care.
 	FunctionType(
@@ -1121,6 +1149,12 @@ public:
 			"Attempted construction of bound function without self type"
 		);
 	}
+
+public:
+	Category category() const override { return Category::Function; }
+
+	/// @returns the type of the "new Contract" function, i.e. basically the constructor.
+	static FunctionTypePointer newExpressionType(ContractDefinition const& _contract);
 
 	TypePointers parameterTypes() const;
 	std::vector<std::string> parameterNames() const;
@@ -1261,10 +1295,12 @@ private:
  */
 class MappingType: public Type
 {
-public:
-	Category category() const override { return Category::Mapping; }
+	friend class TypeProvider;
 	MappingType(Type const* _keyType, Type const* _valueType):
 		m_keyType(_keyType), m_valueType(_valueType) {}
+
+public:
+	Category category() const override { return Category::Mapping; }
 
 	std::string richIdentifier() const override;
 	bool operator==(Type const& _other) const override;
@@ -1293,9 +1329,11 @@ private:
  */
 class TypeType: public Type
 {
+	friend class TypeProvider;
+	explicit TypeType(Type const* _actualType): m_actualType(_actualType) {}
+
 public:
 	Category category() const override { return Category::TypeType; }
-	explicit TypeType(Type const* _actualType): m_actualType(_actualType) {}
 	Type const* actualType() const { return m_actualType; }
 
 	TypeResult binaryOperatorResult(Token, Type const*) const override { return nullptr; }
@@ -1319,9 +1357,11 @@ private:
  */
 class ModifierType: public Type
 {
+	friend class TypeProvider;
+	explicit ModifierType(ModifierDefinition const& _modifier);
+
 public:
 	Category category() const override { return Category::Modifier; }
-	explicit ModifierType(ModifierDefinition const& _modifier);
 
 	TypeResult binaryOperatorResult(Token, Type const*) const override { return nullptr; }
 	bool canBeStored() const override { return false; }
@@ -1344,10 +1384,11 @@ private:
  */
 class ModuleType: public Type
 {
+	friend class TypeProvider;
+	explicit ModuleType(SourceUnit const& _source): m_sourceUnit(_source) {}
+
 public:
 	Category category() const override { return Category::Module; }
-
-	explicit ModuleType(SourceUnit const& _source): m_sourceUnit(_source) {}
 
 	TypeResult binaryOperatorResult(Token, Type const*) const override { return nullptr; }
 	std::string richIdentifier() const override;
@@ -1377,10 +1418,14 @@ public:
 		ABI, ///< "abi"
 		MetaType ///< "type(...)"
 	};
-	Category category() const override { return Category::Magic; }
 
+private:
+	friend class TypeProvider;
 	explicit MagicType(Kind _kind): m_kind(_kind) {}
 	explicit MagicType(Type const* _metaTypeArg): m_kind{Kind::MetaType}, m_typeArgument{_metaTypeArg} {}
+
+public:
+	Category category() const override { return Category::Magic; }
 
 	/// Factory function for meta type
 	static MagicType const* metaType(TypePointer _type);
@@ -1416,6 +1461,9 @@ private:
  */
 class InaccessibleDynamicType: public Type
 {
+	friend class TypeProvider;
+	InaccessibleDynamicType() = default;
+
 public:
 	Category category() const override { return Category::InaccessibleDynamic; }
 
