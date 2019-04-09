@@ -119,10 +119,11 @@ bool IRGeneratorForStatements::visit(FunctionCall const& _functionCall)
 		// named arguments
 		for (auto const& parameterName: functionType->parameterNames())
 		{
-			auto it = std::find(callArgumentNames.begin(), callArgumentNames.end(), [&](auto const& _argName) {
+			auto const it = std::find_if(callArgumentNames.cbegin(), callArgumentNames.cend(), [&](ASTPointer<ASTString> const& _argName) {
 				return *_argName == parameterName;
 			});
-			solAssert(it != callArgumentNames.end(), "");
+
+			solAssert(it != callArgumentNames.cend(), "");
 			arguments.push_back(callArguments[std::distance(callArgumentNames.begin(), it)]);
 		}
 
