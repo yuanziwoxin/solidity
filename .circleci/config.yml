@@ -30,7 +30,7 @@ defaults:
       command: scripts/tests.sh --junit_report test_results
   - run_regressions: &run_regressions
       name: Regression tests
-      command: scripts/regressions.sh
+      command: scripts/regressions.py
   - solc_artifact: &solc_artifact
       path: build/solc/solc
       destination: solc
